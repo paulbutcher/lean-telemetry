@@ -6,6 +6,7 @@ import TelemetryTest.Config
 import TelemetryTest.File
 import TelemetryTest.Id
 import TelemetryTest.Install
+import TelemetryTest.Json
 import TelemetryTest.Layering
 import TelemetryTest.Logging
 import TelemetryTest.Monad
@@ -22,6 +23,7 @@ def main : IO UInt32 :=
     ("file", TelemetryTest.File.suite),
     ("ids", TelemetryTest.Id.suite),
     ("install", TelemetryTest.Install.suite),
+    ("json", TelemetryTest.Json.suite),
     ("layering", TelemetryTest.Layering.suite),
     ("logging", TelemetryTest.Logging.suite),
     ("monad", TelemetryTest.Monad.suite),

@@ -31,6 +31,13 @@ private def withoutSdk : IO (String × String) := do
     info "readable on stdout"
     error "readable on stderr"
 
+/--
+Which stream a record goes to is decided by comparing severity numbers, so nothing in the
+definition names the two severities it actually selects.
+-/
+theorem isError_iff (s : Severity) : s.isError = (s == .error || s == .fatal) := by
+  cases s <;> rfl
+
 def suite : TestM Unit := do
   let logs ← recorded
   checkEq "both records reach the SDK" logs.size 2

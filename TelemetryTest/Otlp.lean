@@ -48,6 +48,26 @@ private def logs (data : LogRecord) : String := Telemetry.Sdk.Otlp.logsRequest r
 private def encodedValue (v : Value) : String :=
   Telemetry.Sdk.Json.render (Telemetry.Sdk.Otlp.anyValue v)
 
+/-!
+A backend can only tell two spans apart if the wire form does, so each of these encodings has
+to be injective. Nothing downstream would notice two cases sharing a number, which is what
+makes it worth proving rather than sampling.
+-/
+
+theorem kindNumber_inj (a b : SpanKind)
+    (h : Telemetry.Sdk.Otlp.kindNumber a = Telemetry.Sdk.Otlp.kindNumber b) : a = b := by
+  cases a <;> cases b <;> simp_all [Telemetry.Sdk.Otlp.kindNumber]
+
+theorem statusNumber_inj (a b : StatusCode)
+    (h : Telemetry.Sdk.Otlp.statusNumber a = Telemetry.Sdk.Otlp.statusNumber b) : a = b := by
+  cases a <;> cases b <;> simp_all [Telemetry.Sdk.Otlp.statusNumber]
+
+theorem severityNumber_inj (a b : Severity) (h : a.number = b.number) : a = b := by
+  cases a <;> cases b <;> simp_all [Severity.number]
+
+theorem severityText_inj (a b : Severity) (h : a.text = b.text) : a = b := by
+  cases a <;> cases b <;> simp_all [Severity.text]
+
 def suite : TestM Unit := do
   checkEq "a root span encodes to a complete request" (spans root)
     "{\"resourceSpans\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"timetabling\"}}]},\"scopeSpans\":[{\"scope\":{\"name\":\"lean-telemetry\",\"version\":\"0.1.0\"},\"spans\":[{\"traceId\":\"4bf92f3577b34da6a3ce929d0e0e4736\",\"spanId\":\"00f067aa0ba902b7\",\"name\":\"solve\",\"kind\":1,\"startTimeUnixNano\":\"1755172471882000000\",\"endTimeUnixNano\":\"1755172471890000000\",\"attributes\":[]}]}]}]}"

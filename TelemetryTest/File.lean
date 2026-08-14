@@ -51,6 +51,33 @@ private def writeMany : IO Written :=
     continuation.exportSpans #[sampleSpan "after restart"]
     return { segments, lines, whole, continued := ← numbersIn directory }
 
+private theorem le_foldl_max (l : List Nat) (init : Nat) :
+    init ≤ l.foldl (fun best number => max best (number + 1)) init := by
+  induction l generalizing init with
+  | nil => simp
+  | cons a t ih => exact Nat.le_trans (Nat.le_max_left init (a + 1)) (ih _)
+
+private theorem lt_foldl_max (l : List Nat) (init n : Nat) (h : n ∈ l) :
+    n < l.foldl (fun best number => max best (number + 1)) init := by
+  induction l generalizing init with
+  | nil => cases h
+  | cons a t ih =>
+    cases h with
+    | head =>
+      exact Nat.lt_of_lt_of_le (Nat.lt_succ_self _)
+        (Nat.le_trans (Nat.le_max_right init _) (le_foldl_max t _))
+    | tail _ h => exact ih _ h
+
+/--
+A restart that reused a number would append to a segment a reader has already passed, losing
+everything written after it, so this holds for every directory rather than for the ones a
+generator happens to produce.
+-/
+theorem lt_nextNumber (existing : Array Nat) (n : Nat) (h : n ∈ existing) :
+    n < nextNumber existing := by
+  rw [Telemetry.Sdk.File.nextNumber, ← Array.foldl_toList]
+  exact lt_foldl_max existing.toList 0 n (by simpa using h)
+
 def suite : TestM Unit := do
   checkEq "segment names are zero padded" (segmentName 12) "telemetry-000012.jsonl"
   property "a segment name identifies its segment"
@@ -60,11 +87,11 @@ def suite : TestM Unit := do
 
   checkEq "an empty directory starts at zero" (nextNumber #[]) 0
   checkEq "numbering continues above the highest, not the last" (nextNumber #[0, 7, 3]) 8
-  property "the next number is always above every existing one"
-    (∀ existing : List Nat, existing.all (· < nextNumber existing.toArray))
 
   checkEq "nothing is deleted below the cap" (surplus #[1, 2] 3) #[]
   checkEq "the lowest numbers are deleted first" (surplus #[4, 1, 3, 2] 2) #[1, 2]
+  -- Retention resists proof only because `surplus` sorts with `Array.qsort`, which the
+  -- toolchain ships without lemmas, so there is nothing to reason from.
   property "retention leaves the cap standing"
     (∀ (existing : List Nat) (cap : Nat),
       existing.length - (surplus existing.toArray cap).size = min existing.length (max cap 1))
