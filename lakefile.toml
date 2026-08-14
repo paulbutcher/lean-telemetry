@@ -1,0 +1,6 @@
+name = "telemetry"
+version = "0.1.0"
+defaultTargets = ["Telemetry"]
+
+[[lean_lib]]
+name = "Telemetry"
