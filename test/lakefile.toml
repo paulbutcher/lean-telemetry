@@ -1,22 +1,18 @@
-name = "telemetry"
-version = "0.1.0"
-defaultTargets = ["Telemetry", "TelemetrySdk"]
+name = "telemetryTest"
+defaultTargets = ["test"]
 testDriver = "test"
 
 [leanOptions]
 warningAsError = true
 
 [[require]]
+name = "telemetry"
+path = ".."
+
+[[require]]
 name = "plausible"
 scope = "leanprover-community"
 rev = "v4.33.0"
-
-[[lean_lib]]
-name = "Telemetry"
-
-[[lean_lib]]
-name = "TelemetrySdk"
-roots = ["Telemetry.Sdk"]
 
 [[lean_lib]]
 name = "TelemetryTest"

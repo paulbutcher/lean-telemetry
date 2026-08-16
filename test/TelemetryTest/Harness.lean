@@ -14,6 +14,11 @@ def failure (message : String) : TestM Unit :=
 def containsText (haystack needle : String) : Bool :=
   (haystack.splitOn needle).length > 1
 
+def bufferText (buffer : IO.Ref IO.FS.Stream.Buffer) : IO String := do
+  match String.fromUTF8? (← buffer.get).data with
+  | some text => pure text
+  | none => throw (IO.userError "captured output was not valid UTF-8")
+
 def check (label : String) (cond : Bool) : TestM Unit :=
   unless cond do failure label
 

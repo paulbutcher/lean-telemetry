@@ -41,7 +41,7 @@ private def defaultInstallation : IO String := do
     installFromEnv
     runTelemetry (spanning "default install" (pure ()))
     Telemetry.Sdk.shutdown
-  return String.fromUTF8! (← out.get).data
+  bufferText out
 
 def suite : TestM Unit := do
   let outcome ← fanOut

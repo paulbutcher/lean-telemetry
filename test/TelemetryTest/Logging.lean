@@ -23,7 +23,7 @@ private def captured (act : IO Unit) : IO (String × String) := do
   let out ← IO.mkRef { : IO.FS.Stream.Buffer }
   let err ← IO.mkRef { : IO.FS.Stream.Buffer }
   IO.withStdout (IO.FS.Stream.ofBuffer out) <| IO.withStderr (IO.FS.Stream.ofBuffer err) act
-  return (String.fromUTF8! (← out.get).data, String.fromUTF8! (← err.get).data)
+  return (← bufferText out, ← bufferText err)
 
 private def withoutSdk : IO (String × String) := do
   clearHooks

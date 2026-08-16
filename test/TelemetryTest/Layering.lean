@@ -18,12 +18,15 @@ def importsSdk (source : String) : Bool :=
 
 def isSdkSource (path : System.FilePath) : Bool :=
   let path := path.toString
-  path.startsWith "Telemetry/Sdk." || path.startsWith "Telemetry/Sdk/"
+  containsText path "Telemetry/Sdk." || containsText path "Telemetry/Sdk/"
+
+/-- These tests are their own package, so the sources they scan sit one level above them. -/
+def sourceRoot : System.FilePath := ".."
 
 def apiSources : IO (Array System.FilePath) := do
-  let all ← System.FilePath.walkDir "Telemetry"
+  let all ← System.FilePath.walkDir (sourceRoot / "Telemetry")
   let api := all.filter fun p => p.extension == some "lean" && !isSdkSource p
-  return api.push "Telemetry.lean"
+  return api.push (sourceRoot / "Telemetry.lean")
 
 def suite : TestM Unit := do
   let sources ← apiSources
