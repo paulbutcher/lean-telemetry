@@ -46,14 +46,17 @@ private def build (resource : Resource) (config : Config) (kind : ExporterKind) 
     | .pretty => pure Console.pretty
     | .otlpJson => pure (Console.otlpJson resource)
   | .file => File.otlpJson resource config.file
+  | .otlp => Http.otlpJson resource config.otlp
 
-def installFromEnv : IO Unit := do
+/-- `extraAttrs` contributes resource attributes the environment cannot supply, and is overridden
+by `OTEL_RESOURCE_ATTRIBUTES` and `OTEL_SERVICE_NAME`. -/
+def installFromEnv (extraAttrs : Attrs := []) : IO Unit := do
   let (config, warnings) ← Config.fromEnv
   for warning in warnings do
     Output.stderr s!"lean-telemetry: {warning}\n"
   if config.disabled then
     return
-  let resource ← Resource.detect
+  let resource ← Resource.detect extraAttrs
   -- One exporter per kind even when both signals want it, so that both share its stream.
   let kinds := (config.traces ++ config.logs).eraseDups
   let exporters ← kinds.toArray.mapM fun kind => do

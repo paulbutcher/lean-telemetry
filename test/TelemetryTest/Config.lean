@@ -37,9 +37,9 @@ def suite : TestM Unit := do
     (parsed [("OTEL_TRACES_EXPORTER", "file"), ("OTEL_LOGS_EXPORTER", "console")]).traces [.file]
 
   checkEq "an unsupported exporter is reported, not obeyed"
-    (parsed [("OTEL_TRACES_EXPORTER", "otlp,console")]).traces [.console]
+    (parsed [("OTEL_TRACES_EXPORTER", "zipkin,console")]).traces [.console]
   checkEq "and it produces exactly one warning"
-    (warnings [("OTEL_TRACES_EXPORTER", "otlp,console")]).length 1
+    (warnings [("OTEL_TRACES_EXPORTER", "zipkin,console")]).length 1
 
   checkEq "the console format can be switched to OTLP"
     (parsed [("OTEL_EXPORTER_CONSOLE_FORMAT", "otlp_json")]).consoleFormat ConsoleFormat.otlpJson
@@ -59,5 +59,27 @@ def suite : TestM Unit := do
 
   checkEq "a sampler this library cannot honour is ignored in silence"
     (warnings [("OTEL_TRACES_SAMPLER", "traceidratio")]).length 0
+
+  let collector := parsed [("OTEL_TRACES_EXPORTER", "otlp"), ("OTEL_LOGS_EXPORTER", "otlp")]
+  checkEq "the collector can be selected for both signals" (collector.traces, collector.logs)
+    ([ExporterKind.otlp], [ExporterKind.otlp])
+
+  let base := (parsed [("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318")]).otlp
+  checkEq "a base endpoint supplies both signals" (base.traces, base.logs)
+    ("http://collector:4318/v1/traces", "http://collector:4318/v1/logs")
+  let mixed := (parsed [("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318"),
+    ("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://elsewhere:4318/write")]).otlp
+  checkEq "a signal endpoint overrides the base for that signal alone" (mixed.traces, mixed.logs)
+    ("http://elsewhere:4318/write", "http://collector:4318/v1/logs")
+  checkEq "the JSON protocol is accepted in silence"
+    (warnings [("OTEL_EXPORTER_OTLP_PROTOCOL", "http/json")]).length 0
+  checkEq "and the protocol this library cannot encode warns rather than approximating"
+    (warnings [("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")]).length 1
+  checkEq "the timeout is read"
+    (parsed [("OTEL_EXPORTER_OTLP_TIMEOUT", "500")]).otlp.timeoutMillis 500
+  checkEq "a timeout that is not a number warns and keeps the default"
+    ((parsed [("OTEL_EXPORTER_OTLP_TIMEOUT", "5s")]).otlp.timeoutMillis,
+      (warnings [("OTEL_EXPORTER_OTLP_TIMEOUT", "5s")]).length)
+    (Http.defaultTimeoutMillis, 1)
 
 end TelemetryTest.Config

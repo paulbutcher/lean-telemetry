@@ -81,6 +81,18 @@ def suite : TestM Unit := do
   checkEq "detected attributes survive alongside" (named.attrs.lookup Conventions.hostName)
     (some (.str "box"))
 
+  -- What an application knows and the environment cannot, such as an execution environment's
+  -- own identifier, without taking the deployment's ability to override it.
+  let contributed := assemble detected (some "faas.instance=fromEnvironment") none
+    [("faas.instance", .str "fromApplication"), ("cloud.provider", .str "aws")]
+  checkEq "an application can contribute what nothing else supplies"
+    (contributed.attrs.lookup "cloud.provider") (some (.str "aws"))
+  checkEq "but the environment still wins"
+    (contributed.attrs.lookup "faas.instance") (some (.str "fromEnvironment"))
+  checkEq "and what it contributes beats what was detected"
+    ((assemble detected none none [(Conventions.hostName, .str "fromApplication")]).attrs.lookup
+      Conventions.hostName) (some (.str "fromApplication"))
+
   let host := (← Telemetry.Sdk.Resource.detect).attrs.lookup Conventions.hostName
   check "a host name is always reported" host.isSome
 

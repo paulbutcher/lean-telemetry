@@ -32,17 +32,22 @@ def detected : IO Attrs := do
   return [(Conventions.hostName, .str host), (Conventions.processPid, .int (← IO.Process.getPID).toNat)]
 
 /--
-In increasing order of precedence: what could be detected, then `OTEL_RESOURCE_ATTRIBUTES`,
-then `OTEL_SERVICE_NAME`.
+In increasing order of precedence: what could be detected, then `extra`, then
+`OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME`.
+
+`extra` sits below the environment so that an application can supply what the environment cannot
+know, such as an identifier for an execution environment it is running in, without taking the
+deployment's ability to override it.
 -/
-def assemble (detected : Attrs) (attributes serviceName : Option String) : Resource :=
+def assemble (detected : Attrs) (attributes serviceName : Option String)
+    (extra : Attrs := []) : Resource :=
   let fromEnv := (attributes.map parseAttributes).getD []
   let service := (serviceName.map fun name => [(Conventions.serviceName, Value.str name)]).getD []
-  { attrs := merge (merge detected fromEnv) service }
+  { attrs := merge (merge (merge detected extra) fromEnv) service }
 
-def detect : IO Resource :=
+def detect (extra : Attrs := []) : IO Resource :=
   return assemble (← detected) (← IO.getEnv "OTEL_RESOURCE_ATTRIBUTES")
-    (← IO.getEnv "OTEL_SERVICE_NAME")
+    (← IO.getEnv "OTEL_SERVICE_NAME") extra
 
 end Resource
 

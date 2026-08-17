@@ -3,6 +3,7 @@ Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Telemetry.Sdk.File
+import Telemetry.Sdk.Http
 
 /-!
 Configuration comes from the standard OpenTelemetry environment variables. `OTEL_TRACES_SAMPLER`
@@ -14,7 +15,7 @@ worst failure this library has.
 namespace Telemetry.Sdk
 
 inductive ExporterKind where
-  | console | file
+  | console | file | otlp
   deriving Repr, BEq, DecidableEq, Inhabited
 
 inductive ConsoleFormat where
@@ -31,6 +32,7 @@ structure Config where
     maxBytes := File.defaultMaxBytes
     maxSegments := File.defaultMaxSegments
   }
+  otlp : Http.Config := Http.default
   deriving Repr
 
 namespace Config
@@ -43,6 +45,7 @@ private def parseExporters (spec : String) : List ExporterKind × List String :=
     | "" | "none" => (kinds, unknown)
     | "console" => (kinds ++ [.console], unknown)
     | "file" => (kinds ++ [.file], unknown)
+    | "otlp" => (kinds ++ [.otlp], unknown)
     | other => (kinds, unknown ++ [other])
 
 private def ignoring (setting value : String) : String :=
@@ -81,13 +84,31 @@ def parse (env : String → Option String) : Config × List String := Id.run do
     | some count => config := { config with file := { config.file with maxSegments := count } }
     | none => warnings := warnings ++ [ignoring "OTEL_EXPORTER_FILE_MAX_SEGMENTS" value]
 
+  -- `http/protobuf` is the specification's default, so a value that cannot be acted on here is
+  -- more likely to be deliberate than a typo, and worth saying so rather than approximating.
+  if let some value := env "OTEL_EXPORTER_OTLP_PROTOCOL" then
+    if normalise value != "http/json" then
+      warnings := warnings ++ [ignoring "OTEL_EXPORTER_OTLP_PROTOCOL" value]
+
+  let mut timeout := Http.defaultTimeoutMillis
+  if let some value := env "OTEL_EXPORTER_OTLP_TIMEOUT" then
+    match value.trimAscii.toString.toNat? with
+    | some millis => timeout := millis
+    | none => warnings := warnings ++ [ignoring "OTEL_EXPORTER_OTLP_TIMEOUT" value]
+
+  let otlp := Http.resolve (env "OTEL_EXPORTER_OTLP_ENDPOINT")
+    (env "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") (env "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT") timeout
+  config := { config with otlp }
+
   return (config, warnings)
 
 def fromEnv : IO (Config × List String) := do
   let mut values : List (String × String) := []
   for setting in ["OTEL_SDK_DISABLED", "OTEL_SERVICE_NAME", "OTEL_TRACES_EXPORTER",
       "OTEL_LOGS_EXPORTER", "OTEL_EXPORTER_CONSOLE_FORMAT", "OTEL_EXPORTER_FILE_DIRECTORY",
-      "OTEL_EXPORTER_FILE_MAX_SIZE", "OTEL_EXPORTER_FILE_MAX_SEGMENTS"] do
+      "OTEL_EXPORTER_FILE_MAX_SIZE", "OTEL_EXPORTER_FILE_MAX_SEGMENTS",
+      "OTEL_EXPORTER_OTLP_PROTOCOL", "OTEL_EXPORTER_OTLP_TIMEOUT", "OTEL_EXPORTER_OTLP_ENDPOINT",
+      "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"] do
     if let some value ← IO.getEnv setting then
       values := values ++ [(setting, value)]
   return parse fun setting => values.lookup setting

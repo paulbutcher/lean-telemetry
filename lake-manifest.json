@@ -1,6 +1,16 @@
 {"version": "1.2.0",
  "packagesDir": ".lake/packages",
- "packages": [],
+ "packages":
+ [{"url": "https://github.com/paulbutcher/leancurl",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "3c5a16e4557f2493a3bfcf379a63b47775ed4709",
+   "name": "leancurl",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "v0.2.1",
+   "inherited": false,
+   "configFile": "lakefile.lean"}],
  "name": "telemetry",
  "lakeDir": ".lake",
  "fixedToolchain": false}

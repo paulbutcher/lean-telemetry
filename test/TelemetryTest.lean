@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import TelemetryTest.Config
 import TelemetryTest.Consumer
 import TelemetryTest.File
+import TelemetryTest.Http
 import TelemetryTest.Id
 import TelemetryTest.Install
 import TelemetryTest.Json
@@ -24,6 +25,7 @@ def main : IO UInt32 :=
     ("config", TelemetryTest.Config.suite),
     ("consumer", TelemetryTest.Consumer.suite),
     ("file", TelemetryTest.File.suite),
+    ("http", TelemetryTest.Http.suite),
     ("ids", TelemetryTest.Id.suite),
     ("install", TelemetryTest.Install.suite),
     ("json", TelemetryTest.Json.suite),

@@ -7,6 +7,7 @@ import Telemetry.Sdk.Console
 import Telemetry.Sdk.Data
 import Telemetry.Sdk.Exporter
 import Telemetry.Sdk.File
+import Telemetry.Sdk.Http
 import Telemetry.Sdk.Install
 import Telemetry.Sdk.Json
 import Telemetry.Sdk.Otlp

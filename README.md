@@ -5,17 +5,23 @@ OpenTelemetry tracing and logging for Lean 4 applications.
 It produces spans and log records and writes them either in a readable form for a developer
 watching a terminal, or as OTLP/JSON for an OpenTelemetry Collector to forward to a backend.
 
-It speaks no HTTP. There is no network code, no FFI and no vendor-specific code anywhere in it:
-telemetry leaves the process on stdout, on stderr, or in files on disk, and getting it from
-there to a backend is the collector's job.
+Reaching a backend is the collector's job, and there is no vendor-specific code anywhere in this
+library. Telemetry leaves the process on stdout, on stderr, in files on disk, or over a loopback
+socket to a collector in the same execution environment; what the collector does with it from
+there is configured in the collector, not here.
 
 ## Libraries
 
 | Library | Contents | Depends on |
 |---|---|---|
 | `Telemetry` | The API: `MonadTelemetry`, `span`, `spanning`, the log functions, semantic convention constants. | Lean core and Std only |
-| `Telemetry.Sdk` | Resource detection, exporters, installation, configuration from the environment. | `Telemetry` |
+| `Telemetry.Sdk` | Resource detection, exporters, installation, configuration from the environment. | `Telemetry`, [`leancurl`](https://github.com/paulbutcher/leancurl) |
 | `Telemetry.Testing` | Test helpers. | `Telemetry.Sdk` |
+
+`leancurl` binds to `libcurl`, so building this package needs `libcurl` and `pkg-config`
+available. Instrumenting a library against `Telemetry` alone brings in no network code, but the
+dependency is resolved package-wide, so a consumer's build needs `libcurl` present whether or not
+it installs an SDK.
 
 Instrument a library against `Telemetry` alone. Only the application at the top chooses an SDK.
 
@@ -90,12 +96,17 @@ Standard OpenTelemetry environment variables throughout.
 | `OTEL_SDK_DISABLED` | When `true`, no SDK is installed at all. | `false` |
 | `OTEL_SERVICE_NAME` | `service.name` on the resource. | unset |
 | `OTEL_RESOURCE_ATTRIBUTES` | Comma-separated `key=value` pairs added to the resource. | unset |
-| `OTEL_TRACES_EXPORTER` | Comma-separated list of `console`, `file`, `none`. | `console` |
+| `OTEL_TRACES_EXPORTER` | Comma-separated list of `console`, `file`, `otlp`, `none`. | `console` |
 | `OTEL_LOGS_EXPORTER` | As above, for log records. | `console` |
 | `OTEL_EXPORTER_CONSOLE_FORMAT` | `pretty` or `otlp_json`. | `pretty` |
 | `OTEL_EXPORTER_FILE_DIRECTORY` | Directory for segment files. | `telemetry` |
 | `OTEL_EXPORTER_FILE_MAX_SIZE` | Segment size threshold in bytes. | `8388608` |
 | `OTEL_EXPORTER_FILE_MAX_SEGMENTS` | Segments retained before the oldest is deleted. | `8` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Base URL; the signal's path is appended to it. | `http://localhost:4318` |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | Complete URL for spans, used as given. | base plus `/v1/traces` |
+| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | Complete URL for log records, used as given. | base plus `/v1/logs` |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/json`. | `http/json` |
+| `OTEL_EXPORTER_OTLP_TIMEOUT` | Per-export timeout in milliseconds. | `10000` |
 
 `OTEL_EXPORTER_CONSOLE_FORMAT=otlp_json` gives stdout over to the machine, at which point the
 readable format is simply unavailable on that stream. Run the file exporter alongside the
@@ -106,7 +117,17 @@ than being obeyed in some approximate way. `OTEL_TRACES_SAMPLER` is standard but
 here, and is ignored in silence.
 
 Resource attributes are assembled in increasing order of precedence: detected values
-(`host.name`, `process.pid`), then `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME`.
+(`host.name`, `process.pid`), then `installFromEnv`'s `extraAttrs`, then
+`OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME`.
+
+`extraAttrs` is for what an application knows and the environment cannot be told, such as an
+identifier for the execution environment it happens to be running in:
+
+```lean
+Sdk.installFromEnv (extraAttrs := [("faas.instance", .str instanceId)])
+```
+
+It sits below the environment, so a deployment can still override anything it sets.
 
 ## File output
 
@@ -140,10 +161,56 @@ service:
       exporters: [otlp]
 ```
 
+## OTLP over HTTP
+
+Where a collector cannot read files, the `otlp` exporter POSTs the same OTLP/JSON to one over
+HTTP. It exists for collectors in the same execution environment, and `http://localhost:4318` is
+the target it is designed for; AWS Lambda, where the collector runs as an external extension and
+its component set has no file receiver at all, is the case that motivated it.
+
+```sh
+OTEL_TRACES_EXPORTER=otlp OTEL_LOGS_EXPORTER=otlp
+```
+
+That scope is what keeps it small. There is no TLS, no authentication, no retry, no backoff and
+no queueing, because the traffic is not expected to leave the machine and the collector owns
+delivery once it has the data. Sending this across a network is not what it is for.
+
+The payload is OTLP/JSON, which the collector's OTLP receiver accepts on its HTTP port. The
+specification's default is `http/protobuf`, which this library has no encoder for, so
+`OTEL_EXPORTER_OTLP_PROTOCOL` is warned about and ignored unless it is `http/json`.
+
+`OTEL_EXPORTER_OTLP_ENDPOINT` is a base URL that the signal's path is appended to;
+`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` and `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` are complete URLs
+used exactly as given.
+
+Each export is its own connection. An execution environment that freezes between invocations
+freezes both ends of a kept one, which would then be resumed against a peer that may long since
+have dropped it.
+
+### When the collector is not there
+
+A failed export never reaches the application. A request does not fail, and a span's `report`
+does not throw, because telemetry could not be delivered; the data is dropped and the failure is
+reported on stderr instead.
+
+A collector that is missing would otherwise produce one stderr line per span, so an outage is
+reported when it starts and counted after that:
+
+```
+lean-telemetry: http://localhost:4318/v1/traces: Connection refused; further export failures
+will be counted rather than reported
+lean-telemetry: collector reachable again; 148 export(s) were dropped
+```
+
+A collector that answers but rejects the payload is treated the same way, with its status code in
+place of the transport error. Nothing is opened at installation, so a collector that has not
+started yet does not stop an application starting.
+
 ## Not implemented
 
-Metrics, sampling, W3C `traceparent` propagation between processes, a direct OTLP/HTTP
-exporter, batching, and span attribute limits.
+Metrics, sampling, W3C `traceparent` propagation between processes, batching, span attribute
+limits, and OTLP over gRPC or protobuf.
 
 ## Building
 
@@ -151,3 +218,5 @@ exporter, batching, and span attribute limits.
 lake build
 lake test
 ```
+
+`libcurl` and `pkg-config` must be available; they are discovered at build time.
