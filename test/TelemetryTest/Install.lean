@@ -3,21 +3,21 @@ Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Telemetry.Sdk.Install
+import Telemetry.Testing
 import TelemetryTest.Harness
-import TelemetryTest.Memory
 
 namespace TelemetryTest.Install
 
-open Telemetry Telemetry.Sdk
+open Telemetry Telemetry.Sdk Telemetry.Testing
 
 private structure Outcome where
-  first : Memory
-  second : Memory
+  first : Recorder
+  second : Recorder
   afterShutdown : Nat
 
 private def fanOut : IO Outcome := do
-  let first ← Memory.new
-  let second ← Memory.new
+  let first ← Recorder.new
+  let second ← Recorder.new
   install { attrs := [] } #[first.exporter, second.exporter]
   runTelemetry do
     spanning "work" (attrs := [("k", "v")]) do

@@ -6,7 +6,7 @@ import Lake
 open Lake DSL
 
 package telemetry where
-  version := v!"0.1.1"
+  version := v!"0.2.0"
   leanOptions := #[⟨`warningAsError, true⟩]
 
 @[default_target]
@@ -15,6 +15,11 @@ lean_lib Telemetry
 @[default_target]
 lean_lib TelemetrySdk where
   roots := #[`Telemetry.Sdk]
+
+/-- For a consumer's test code; nothing in an application need import it. -/
+@[default_target]
+lean_lib TelemetryTesting where
+  roots := #[`Telemetry.Testing]
 
 /-- Keeps the tests and their dependencies out of the graph a consumer resolves. -/
 @[test_driver]

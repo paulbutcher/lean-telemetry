@@ -15,6 +15,7 @@ there to a backend is the collector's job.
 |---|---|---|
 | `Telemetry` | The API: `MonadTelemetry`, `span`, `spanning`, the log functions, semantic convention constants. | Lean core and Std only |
 | `Telemetry.Sdk` | Resource detection, exporters, installation, configuration from the environment. | `Telemetry` |
+| `Telemetry.Testing` | Test helpers. | `Telemetry.Sdk` |
 
 Instrument a library against `Telemetry` alone. Only the application at the top chooses an SDK.
 
@@ -63,6 +64,22 @@ id.
 
 An exception escaping a span still reports the span, with status `error` and the exception's
 message, and is re-raised unchanged.
+
+## Testing instrumentation
+
+`capture` runs an action with an in-memory exporter and returns its result alongside 
+everything that reached the exporter:
+
+```lean
+import Telemetry.Testing
+
+open Telemetry Telemetry.Testing
+
+def solveIsInstrumented : IO Bool := do
+  let (_, captured) ← capture (runTelemetry solve)
+  return captured.spans.map (·.name) == #["score", "solve"]
+    && captured.logs.map (·.body) == #["starting"]
+```
 
 ## Configuration
 
