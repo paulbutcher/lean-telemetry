@@ -18,7 +18,7 @@ open Json
 
 def libraryName : String := "lean-telemetry"
 
-def libraryVersion : String := "0.1.0"
+def libraryVersion : String := "0.2.0"
 
 def kindNumber : SpanKind → Int
   | .internal => 1

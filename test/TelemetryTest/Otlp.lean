@@ -70,7 +70,7 @@ theorem severityText_inj (a b : Severity) (h : a.text = b.text) : a = b := by
 
 def suite : TestM Unit := do
   checkEq "a root span encodes to a complete request" (spans root)
-    "{\"resourceSpans\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"timetabling\"}}]},\"scopeSpans\":[{\"scope\":{\"name\":\"lean-telemetry\",\"version\":\"0.1.0\"},\"spans\":[{\"traceId\":\"4bf92f3577b34da6a3ce929d0e0e4736\",\"spanId\":\"00f067aa0ba902b7\",\"name\":\"solve\",\"kind\":1,\"startTimeUnixNano\":\"1755172471882000000\",\"endTimeUnixNano\":\"1755172471890000000\",\"attributes\":[]}]}]}]}"
+    ("{\"resourceSpans\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"timetabling\"}}]},\"scopeSpans\":[{\"scope\":{\"name\":\"lean-telemetry\",\"version\":\"" ++ Telemetry.Sdk.Otlp.libraryVersion ++ "\"},\"spans\":[{\"traceId\":\"4bf92f3577b34da6a3ce929d0e0e4736\",\"spanId\":\"00f067aa0ba902b7\",\"name\":\"solve\",\"kind\":1,\"startTimeUnixNano\":\"1755172471882000000\",\"endTimeUnixNano\":\"1755172471890000000\",\"attributes\":[]}]}]}]}")
 
   check "a root span carries no parent" (!containsText (spans root) "parentSpanId")
   check "an unset status is omitted" (!containsText (spans root) "status")
@@ -97,7 +97,7 @@ def suite : TestM Unit := do
     (containsText (encodedValue (.float (1.0 / 0.0))) "stringValue")
 
   checkEq "a log record encodes to a complete request" (logs record)
-    "{\"resourceLogs\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"timetabling\"}}]},\"scopeLogs\":[{\"scope\":{\"name\":\"lean-telemetry\",\"version\":\"0.1.0\"},\"logRecords\":[{\"timeUnixNano\":\"1755172471882000000\",\"observedTimeUnixNano\":\"1755172471882000000\",\"severityNumber\":9,\"severityText\":\"INFO\",\"body\":{\"stringValue\":\"solve started\"},\"attributes\":[],\"traceId\":\"4bf92f3577b34da6a3ce929d0e0e4736\",\"spanId\":\"00f067aa0ba902b7\"}]}]}]}"
+    ("{\"resourceLogs\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"timetabling\"}}]},\"scopeLogs\":[{\"scope\":{\"name\":\"lean-telemetry\",\"version\":\"" ++ Telemetry.Sdk.Otlp.libraryVersion ++ "\"},\"logRecords\":[{\"timeUnixNano\":\"1755172471882000000\",\"observedTimeUnixNano\":\"1755172471882000000\",\"severityNumber\":9,\"severityText\":\"INFO\",\"body\":{\"stringValue\":\"solve started\"},\"attributes\":[],\"traceId\":\"4bf92f3577b34da6a3ce929d0e0e4736\",\"spanId\":\"00f067aa0ba902b7\"}]}]}]}")
 
   check "a record outside a span carries no ids"
     (!containsText (logs { record with ctx := none }) "traceId")

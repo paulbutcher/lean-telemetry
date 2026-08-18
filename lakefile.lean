@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Lake
 open Lake DSL
 
+/-- Bumping `version` also means bumping `Otlp.libraryVersion`, which reports it on the wire. -/
 package telemetry where
   version := v!"0.2.0"
   leanOptions := #[⟨`warningAsError, true⟩]
