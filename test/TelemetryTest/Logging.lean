@@ -2,10 +2,14 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry.Logging
-import Telemetry.Trace
-import TelemetryTest.Harness
-import TelemetryTest.Recorder
+module
+
+public import Telemetry.Logging
+public import Telemetry.Trace
+public import TelemetryTest.Harness
+public import TelemetryTest.Recorder
+
+public section
 
 namespace TelemetryTest.Logging
 

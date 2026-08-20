@@ -2,11 +2,14 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+module
 
 /-!
 Just enough JSON to write OTLP payloads. Lean's `Json` lives in the `Lean` library rather than
 in `Std`, and this library will not take the compiler as a dependency for one encoder.
 -/
+
+public section
 
 namespace Telemetry.Sdk.Json
 

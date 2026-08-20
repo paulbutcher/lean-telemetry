@@ -2,6 +2,8 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+module
+
 import TelemetryTest.Config
 import TelemetryTest.Consumer
 import TelemetryTest.File
@@ -20,7 +22,7 @@ import TelemetryTest.Trace
 import TelemetryTest.Usage
 import TelemetryTest.Value
 
-def main : IO UInt32 :=
+public def main : IO UInt32 :=
   TelemetryTest.runAll [
     ("config", TelemetryTest.Config.suite),
     ("consumer", TelemetryTest.Consumer.suite),

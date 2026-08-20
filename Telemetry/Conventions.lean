@@ -2,12 +2,15 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+module
 
 /-!
 Attribute names from the OpenTelemetry semantic conventions, so that instrumentation written
 in other packages agrees on spelling. These are the current stable forms, not the older
 `http.method` and `http.status_code`.
 -/
+
+public section
 
 namespace Telemetry.Conventions
 

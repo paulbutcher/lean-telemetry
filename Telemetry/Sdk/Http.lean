@@ -2,10 +2,12 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+module
+
 import Leancurl
 import Std.Sync.Mutex
-import Telemetry.Sdk.Exporter
-import Telemetry.Sdk.Otlp
+public import Telemetry.Sdk.Exporter
+public import Telemetry.Sdk.Otlp
 
 /-!
 OTLP/JSON over HTTP, for handing off to a collector in the same execution environment where that
@@ -13,6 +15,8 @@ collector cannot read files. The traffic is not expected to leave the machine, w
 allows TLS, authentication, retry and queueing to be left out: once the collector has the data it
 owns delivery, and everything before that is a loopback socket.
 -/
+
+public section
 
 namespace Telemetry.Sdk.Http
 
@@ -31,14 +35,14 @@ structure Config where
   deriving Repr, BEq
 
 /-- Appends a signal's path to a base endpoint, whether or not the base ends in a separator. -/
-def signalUrl (base path : String) : String :=
+@[expose] def signalUrl (base path : String) : String :=
   (base.dropEndWhile (· == '/')).toString ++ path
 
 /--
 A base endpoint carries the signal's path; a per-signal endpoint is a complete URL and is used
 exactly as given.
 -/
-def resolve (base traces logs : Option String) (timeoutMillis : Nat) : Config :=
+@[expose] def resolve (base traces logs : Option String) (timeoutMillis : Nat) : Config :=
   let root := base.getD defaultEndpoint
   { traces := traces.getD (signalUrl root tracesPath)
     logs := logs.getD (signalUrl root logsPath)

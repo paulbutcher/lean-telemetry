@@ -2,9 +2,11 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry.Sdk.Data
-import Telemetry.Sdk.Json
-import Telemetry.Sdk.Resource
+module
+
+public import Telemetry.Sdk.Data
+public import Telemetry.Sdk.Json
+public import Telemetry.Sdk.Resource
 
 /-!
 OTLP/JSON. Two details deviate from the standard proto3 JSON mapping and are the usual cause of
@@ -12,22 +14,24 @@ silently rejected payloads: ids are lowercase hex rather than base64, and 64-bit
 decimal strings rather than numbers.
 -/
 
+public section
+
 namespace Telemetry.Sdk.Otlp
 
 open Json
 
 def libraryName : String := "lean-telemetry"
 
-def libraryVersion : String := "0.2.0"
+def libraryVersion : String := "0.3.0"
 
-def kindNumber : SpanKind → Int
+@[expose] def kindNumber : SpanKind → Int
   | .internal => 1
   | .server => 2
   | .client => 3
   | .producer => 4
   | .consumer => 5
 
-def statusNumber : StatusCode → Int
+@[expose] def statusNumber : StatusCode → Int
   | .unset => 0
   | .ok => 1
   | .error => 2

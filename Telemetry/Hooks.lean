@@ -2,8 +2,12 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry.Log
-import Telemetry.Span
+module
+
+public import Telemetry.Log
+public import Telemetry.Span
+
+public section
 
 namespace Telemetry
 

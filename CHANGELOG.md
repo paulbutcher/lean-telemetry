@@ -1,8 +1,10 @@
 # Changelog
 
-## [0.2.0] - 2026-08-17
+## [0.3.0] - 2026-08-20
 
-### Added
+Switched to Lean's module system
+
+## [0.2.0] - 2026-08-17
 
 - Test helpers
 - OLTP over HTTP

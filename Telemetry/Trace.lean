@@ -2,10 +2,14 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry.Clock
-import Telemetry.Hooks
-import Telemetry.Id
-import Telemetry.Monad
+module
+
+public import Telemetry.Clock
+public import Telemetry.Hooks
+public import Telemetry.Id
+public import Telemetry.Monad
+
+public section
 
 namespace Telemetry
 

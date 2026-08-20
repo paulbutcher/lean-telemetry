@@ -2,14 +2,18 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry.Testing
-import TelemetryTest.Harness
+module
+
+public import Telemetry.Testing
+public import TelemetryTest.Harness
 
 /-!
 The claims an application instrumented against this library wants to make about itself, written
 the way its own test suite would write them, so that the testing library is exercised from
 outside as well as by the SDK.
 -/
+
+public section
 
 namespace TelemetryTest.Consumer
 

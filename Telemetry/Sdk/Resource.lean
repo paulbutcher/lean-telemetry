@@ -2,7 +2,11 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry
+module
+
+public import Telemetry
+
+public section
 
 namespace Telemetry.Sdk
 
@@ -13,7 +17,7 @@ structure Resource where
 namespace Resource
 
 /-- Attributes from `upper` win, since they come from a more explicit source. -/
-def merge (lower upper : Attrs) : Attrs :=
+@[expose] def merge (lower upper : Attrs) : Attrs :=
   lower.filter (fun (key, _) => !upper.any fun (other, _) => other == key) ++ upper
 
 /-- Parses `OTEL_RESOURCE_ATTRIBUTES`: comma-separated `key=value` pairs. -/

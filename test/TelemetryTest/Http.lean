@@ -2,10 +2,14 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+module
+
 import Std.Http.Server
-import Telemetry.Sdk.Http
-import Telemetry.Sdk.Install
-import TelemetryTest.Harness
+public import Telemetry.Sdk.Http
+public import Telemetry.Sdk.Install
+public import TelemetryTest.Harness
+
+public section
 
 namespace TelemetryTest.Http
 

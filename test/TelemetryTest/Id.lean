@@ -2,9 +2,13 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+module
+
 import Plausible
-import Telemetry.Id
-import TelemetryTest.Harness
+public import Telemetry.Id
+public import TelemetryTest.Harness
+
+public section
 
 namespace TelemetryTest.Id
 

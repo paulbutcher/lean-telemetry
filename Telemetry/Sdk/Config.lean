@@ -2,8 +2,10 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry.Sdk.File
-import Telemetry.Sdk.Http
+module
+
+public import Telemetry.Sdk.File
+public import Telemetry.Sdk.Http
 
 /-!
 Configuration comes from the standard OpenTelemetry environment variables. `OTEL_TRACES_SAMPLER`
@@ -11,6 +13,8 @@ is standard but not honoured here, and is ignored rather than rejected. Anything
 cannot be acted on produces a warning, because telemetry that quietly fails to appear is the
 worst failure this library has.
 -/
+
+public section
 
 namespace Telemetry.Sdk
 

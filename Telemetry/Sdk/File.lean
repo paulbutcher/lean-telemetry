@@ -2,15 +2,19 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+module
+
 import Std.Sync.Mutex
-import Telemetry.Sdk.Exporter
-import Telemetry.Sdk.Otlp
+public import Telemetry.Sdk.Exporter
+public import Telemetry.Sdk.Otlp
 
 /-!
 Segment files are only ever created, appended to and deleted. Nothing is renamed or truncated,
 so a reader holding a file open keeps reading the same file, and rotation is nothing more than
 opening the next one.
 -/
+
+public section
 
 namespace Telemetry.Sdk.File
 
@@ -40,7 +44,7 @@ def segmentNumber? (name : String) : Option Nat :=
     none
 
 /-- Numbering only ever increases, so a restart continues above whatever is already there. -/
-def nextNumber (existing : Array Nat) : Nat :=
+@[expose] def nextNumber (existing : Array Nat) : Nat :=
   existing.foldl (fun best number => max best (number + 1)) 0
 
 /-- The segments to delete once `maxSegments` is exceeded, lowest-numbered first. -/

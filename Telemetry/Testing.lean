@@ -2,8 +2,10 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry.Sdk.Exporter
-import Telemetry.Sdk.Install
+module
+
+public import Telemetry.Sdk.Exporter
+public import Telemetry.Sdk.Install
 
 /-!
 # Testing instrumentation
@@ -15,6 +17,8 @@ Installation is process-global: `hooksRef` and `Sdk.installation` are single `IO
 the whole process. So `capture` may not be used by tests running concurrently with each other,
 nor concurrently with anything else that emits.
 -/
+
+public section
 
 namespace Telemetry.Testing
 

@@ -2,10 +2,18 @@
 Copyright (c) 2026 Paul Butcher. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Telemetry.Context
-import Telemetry.Value
+module
+
+public import Telemetry.Context
+public import Telemetry.Value
+
+public section
 
 namespace Telemetry
+
+-- `Severity` is a closed enumeration whose mapping onto the wire is part of the contract, so
+-- the bodies stay visible to whoever wants to reason about them rather than sample them.
+@[expose] section
 
 inductive Severity where
   | trace | debug | info | warn | error | fatal
@@ -31,6 +39,8 @@ def Severity.text : Severity → String
 /-- Records at `error` and above go to stderr; everything else goes to stdout. -/
 def Severity.isError (s : Severity) : Bool :=
   s.number ≥ Severity.error.number
+
+end
 
 /--
 A log record emitted inside a span carries that span's context, which is why logging belongs
