@@ -9,6 +9,7 @@ public import Telemetry.Sdk.Console
 public import Telemetry.Sdk.Data
 public import Telemetry.Sdk.Exporter
 public import Telemetry.Sdk.File
+public import Telemetry.Sdk.Flat
 public import Telemetry.Sdk.Http
 public import Telemetry.Sdk.Install
 public import Telemetry.Sdk.Json

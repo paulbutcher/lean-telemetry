@@ -47,6 +47,8 @@ def suite : TestM Unit := do
 
   checkEq "the console format can be switched to OTLP"
     (parsed [("OTEL_EXPORTER_CONSOLE_FORMAT", "otlp_json")]).consoleFormat ConsoleFormat.otlpJson
+  checkEq "or to the flat format"
+    (parsed [("OTEL_EXPORTER_CONSOLE_FORMAT", "flat_json")]).consoleFormat ConsoleFormat.flatJson
   checkEq "an unknown format warns and keeps the default"
     ((parsed [("OTEL_EXPORTER_CONSOLE_FORMAT", "yaml")]).consoleFormat,
       (warnings [("OTEL_EXPORTER_CONSOLE_FORMAT", "yaml")]).length)

@@ -7,7 +7,7 @@ open Lake DSL
 
 /-- Bumping `version` also means bumping `Otlp.libraryVersion`, which reports it on the wire. -/
 package telemetry where
-  version := v!"0.3.0"
+  version := v!"0.4.0"
   leanOptions := #[⟨`warningAsError, true⟩]
 
 require leancurl from git "https://github.com/paulbutcher/leancurl" @ "v0.3.0"
@@ -18,6 +18,12 @@ lean_lib Telemetry
 @[default_target]
 lean_lib TelemetrySdk where
   roots := #[`Telemetry.Sdk]
+
+/-- Reading the flat format back. Nothing that only writes telemetry need import it, which is
+why the reader is not part of `TelemetrySdk`. -/
+@[default_target]
+lean_lib TelemetryParse where
+  roots := #[`Telemetry.Parse]
 
 /-- For a consumer's test code; nothing in an application need import it. -/
 @[default_target]

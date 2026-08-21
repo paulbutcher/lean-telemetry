@@ -16,6 +16,9 @@ namespace Telemetry.Sdk.Json
 inductive Json where
   | str (v : String)
   | num (v : Int)
+  /-- A number carried as the digits already written for it, for a value whose exactness
+  matters: `num` holds no fraction and `float` would round one. -/
+  | decimal (digits : String)
   | float (v : Float)
   | bool (v : Bool)
   | arr (items : List Json)
@@ -42,6 +45,7 @@ mutual
 def render : Json → String
   | .str v => "\"" ++ escape v ++ "\""
   | .num v => toString v
+  | .decimal digits => digits
   | .float v => toString v
   | .bool v => if v then "true" else "false"
   | .arr items => "[" ++ renderItems items ++ "]"

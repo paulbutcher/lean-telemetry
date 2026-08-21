@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Telemetry.Sdk.Exporter
+public import Telemetry.Sdk.Flat
 public import Telemetry.Sdk.Otlp
 
 public section
@@ -31,5 +32,12 @@ machine, so the readable format is simply unavailable there.
 def otlpJson (resource : Resource) : Exporter where
   exportSpans spans := Output.stdout (Otlp.traceRequest resource spans ++ "\n")
   exportLogs records := Output.stdout (Otlp.logsRequest resource records ++ "\n")
+
+/-- One flat JSON object per span and per log record, for a store that queries rows rather than
+trees. -/
+def flatJson (resource : Resource) : Exporter where
+  exportSpans spans := spans.forM fun span => Output.stdout (Flat.span resource span ++ "\n")
+  exportLogs records := records.forM fun record =>
+    Output.stdout (Flat.logRecord resource record ++ "\n")
 
 end Telemetry.Sdk.Console

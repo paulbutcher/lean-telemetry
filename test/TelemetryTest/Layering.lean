@@ -7,10 +7,10 @@ module
 public import TelemetryTest.Harness
 
 /-!
-The API library must stay a strict leaf: nothing under `Telemetry/` other than the SDK and the
-testing library may import the SDK, and nothing but the testing library may import the testing
-library, or an application would acquire a dependency on it. Lake cannot express either
-constraint, so they are checked here.
+The API library must stay a strict leaf: nothing under `Telemetry/` other than the SDK, the
+reader and the testing library may import the SDK, and nothing but the library itself may import
+the testing library or the reader, or an application would acquire a dependency on one of them.
+Lake cannot express any of these constraints, so they are checked here.
 -/
 
 public section
@@ -33,6 +33,10 @@ def isSdkSource (path : System.FilePath) : Bool :=
 def isTestingSource (path : System.FilePath) : Bool :=
   containsText path.toString "Telemetry/Testing."
 
+def isParseSource (path : System.FilePath) : Bool :=
+  let path := path.toString
+  containsText path "Telemetry/Parse." || containsText path "Telemetry/Parse/"
+
 /-- These tests are their own package, so the sources they scan sit one level above them. -/
 def sourceRoot : System.FilePath := ".."
 
@@ -51,10 +55,12 @@ def suite : TestM Unit := do
     if isTestingSource source then
       recognised := recognised || imports contents "Telemetry.Sdk"
     else
-      unless isSdkSource source do
+      unless isSdkSource source || isParseSource source do
         check s!"{source} does not import the SDK" (!imports contents "Telemetry.Sdk")
       check s!"{source} does not import the testing library"
         (!imports contents "Telemetry.Testing")
+    unless isParseSource source do
+      check s!"{source} does not import the reader" (!imports contents "Telemetry.Parse")
   -- Every check above is satisfied by an `imports` that recognises nothing at all, so the
   -- one import known to be there has to be found for the rest to mean anything.
   check "the scan recognises an import" recognised

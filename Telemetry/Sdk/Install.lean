@@ -49,6 +49,7 @@ private def build (resource : Resource) (config : Config) (kind : ExporterKind) 
     match config.consoleFormat with
     | .pretty => pure Console.pretty
     | .otlpJson => pure (Console.otlpJson resource)
+    | .flatJson => pure (Console.flatJson resource)
   | .file => File.otlpJson resource config.file
   | .otlp => Http.otlpJson resource config.otlp
 

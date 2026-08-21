@@ -23,7 +23,7 @@ inductive ExporterKind where
   deriving Repr, BEq, DecidableEq, Inhabited
 
 inductive ConsoleFormat where
-  | pretty | otlpJson
+  | pretty | otlpJson | flatJson
   deriving Repr, BEq, Inhabited
 
 structure Config where
@@ -73,6 +73,7 @@ def parse (env : String → Option String) : Config × List String := Id.run do
     match normalise value with
     | "pretty" => config := { config with consoleFormat := .pretty }
     | "otlp_json" => config := { config with consoleFormat := .otlpJson }
+    | "flat_json" => config := { config with consoleFormat := .flatJson }
     | other => warnings := warnings ++ [ignoring "OTEL_EXPORTER_CONSOLE_FORMAT" other]
 
   if let some value := env "OTEL_EXPORTER_FILE_DIRECTORY" then

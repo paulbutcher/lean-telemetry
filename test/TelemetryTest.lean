@@ -7,6 +7,7 @@ module
 import TelemetryTest.Config
 import TelemetryTest.Consumer
 import TelemetryTest.File
+import TelemetryTest.Flat
 import TelemetryTest.Http
 import TelemetryTest.Id
 import TelemetryTest.Install
@@ -15,6 +16,7 @@ import TelemetryTest.Layering
 import TelemetryTest.Logging
 import TelemetryTest.Monad
 import TelemetryTest.Otlp
+import TelemetryTest.Parse
 import TelemetryTest.Render
 import TelemetryTest.Resource
 import TelemetryTest.Testing
@@ -27,6 +29,7 @@ public def main : IO UInt32 :=
     ("config", TelemetryTest.Config.suite),
     ("consumer", TelemetryTest.Consumer.suite),
     ("file", TelemetryTest.File.suite),
+    ("flat", TelemetryTest.Flat.suite),
     ("http", TelemetryTest.Http.suite),
     ("ids", TelemetryTest.Id.suite),
     ("install", TelemetryTest.Install.suite),
@@ -35,6 +38,7 @@ public def main : IO UInt32 :=
     ("logging", TelemetryTest.Logging.suite),
     ("monad", TelemetryTest.Monad.suite),
     ("otlp", TelemetryTest.Otlp.suite),
+    ("parse", TelemetryTest.Parse.suite),
     ("render", TelemetryTest.Render.suite),
     ("resource", TelemetryTest.Resource.suite),
     ("testing", TelemetryTest.Testing.suite),

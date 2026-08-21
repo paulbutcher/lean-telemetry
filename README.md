@@ -2,8 +2,9 @@
 
 OpenTelemetry tracing and logging for Lean 4 applications.
 
-It produces spans and log records and writes them either in a readable form for a developer
-watching a terminal, or as OTLP/JSON for an OpenTelemetry Collector to forward to a backend.
+It produces spans and log records and writes them in a readable form for a developer watching a
+terminal, as OTLP/JSON for an OpenTelemetry Collector to forward to a backend, or as one flat
+JSON object per row for a store that queries rows rather than trees.
 
 Reaching a backend is the collector's job, and there is no vendor-specific code anywhere in this
 library. Telemetry leaves the process on stdout, on stderr, in files on disk, or over a loopback
@@ -16,6 +17,7 @@ there is configured in the collector, not here.
 |---|---|---|
 | `Telemetry` | The API: `MonadTelemetry`, `span`, `spanning`, the log functions, semantic convention constants. | Lean core and Std only |
 | `Telemetry.Sdk` | Resource detection, exporters, installation, configuration from the environment. | `Telemetry`, [`leancurl`](https://github.com/paulbutcher/leancurl) |
+| `Telemetry.Parse` | Reading the flat format back into spans and log records. | `Telemetry.Sdk` |
 | `Telemetry.Testing` | Test helpers. | `Telemetry.Sdk` |
 
 `leancurl` binds to `libcurl`, so building this package needs `libcurl` and `pkg-config`
@@ -98,7 +100,7 @@ Standard OpenTelemetry environment variables throughout.
 | `OTEL_RESOURCE_ATTRIBUTES` | Comma-separated `key=value` pairs added to the resource. | unset |
 | `OTEL_TRACES_EXPORTER` | Comma-separated list of `console`, `file`, `otlp`, `none`. | `console` |
 | `OTEL_LOGS_EXPORTER` | As above, for log records. | `console` |
-| `OTEL_EXPORTER_CONSOLE_FORMAT` | `pretty` or `otlp_json`. | `pretty` |
+| `OTEL_EXPORTER_CONSOLE_FORMAT` | `pretty`, `otlp_json` or `flat_json`. | `pretty` |
 | `OTEL_EXPORTER_FILE_DIRECTORY` | Directory for segment files. | `telemetry` |
 | `OTEL_EXPORTER_FILE_MAX_SIZE` | Segment size threshold in bytes. | `8388608` |
 | `OTEL_EXPORTER_FILE_MAX_SEGMENTS` | Segments retained before the oldest is deleted. | `8` |
@@ -108,9 +110,9 @@ Standard OpenTelemetry environment variables throughout.
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/json`. | `http/json` |
 | `OTEL_EXPORTER_OTLP_TIMEOUT` | Per-export timeout in milliseconds. | `10000` |
 
-`OTEL_EXPORTER_CONSOLE_FORMAT=otlp_json` gives stdout over to the machine, at which point the
-readable format is simply unavailable on that stream. Run the file exporter alongside the
-console one to have both at once.
+Either machine format gives stdout over to the machine, at which point the readable format is
+simply unavailable on that stream. Run the file exporter alongside the console one to have both
+at once.
 
 A value this library cannot act on produces a warning on stderr and is then ignored, rather
 than being obeyed in some approximate way. `OTEL_TRACES_SAMPLER` is standard but not honoured
@@ -128,6 +130,53 @@ Sdk.installFromEnv (extraAttrs := [("faas.instance", .str instanceId)])
 ```
 
 It sits below the environment, so a deployment can still override anything it sets.
+
+## The flat format
+
+`OTEL_EXPORTER_CONSOLE_FORMAT=flat_json` writes one self-contained JSON object per line, one per
+span and one per log record, with the resource denormalised onto every row:
+
+```json
+{"time":"2025-08-14T11:54:31.882000000Z","duration_ms":8.123456,"name":"solve","trace.trace_id":"4bf92f3577b34da6a3ce929d0e0e4736","trace.span_id":"00f067aa0ba902b7","span.kind":"internal","status_code":0,"meta.signal_type":"trace","service.name":"timetabling","solver.strategy":"greedy"}
+```
+
+OTLP/JSON is unqueryable by a row-oriented store: an attribute lives at
+`resourceSpans.0.scopeSpans.0.spans.3.attributes.7.value.stringValue`, at an index that varies
+per span, and the resource sits once per envelope rather than on each row. CloudWatch Logs
+Insights, Athena and Honeycomb's events API all want the opposite, and this is it. Flatness is
+what the first two need; the field names are Honeycomb's rather than invented, so the third
+ingests the same bytes with no mapping in between.
+
+| Field | On | Meaning |
+|---|---|---|
+| `time` | both | RFC 3339 in UTC, with nine fractional digits. |
+| `meta.signal_type` | both | `trace` for a span, `log` for a log record. |
+| `trace.trace_id`, `trace.span_id` | both | Present on a log record only when it was emitted inside a span. |
+| `trace.parent_id` | spans | Absent on a root span. |
+| `duration_ms` | spans | Milliseconds, with six decimal places. |
+| `name`, `span.kind` | spans | `span.kind` is `internal`, `server`, `client`, `producer` or `consumer`. |
+| `status_code`, `status_message` | spans | The OTLP status numbers; the message is absent when there is none. |
+| `severity`, `severity_code`, `body` | log records | The severity as text and as its OTLP number. |
+
+Everything else on a row is an attribute, named exactly as the instrumentation named it.
+
+### Reading it back
+
+`Telemetry.Parse` turns a row back into the `SpanData` or `LogRecord` it was written from, for a
+terminal tool that pretty-prints deployed output, or a forwarder that translates stdout to OTLP:
+
+```lean
+import Telemetry.Parse
+import Telemetry.Sdk
+
+open Telemetry
+
+def reprint (line : String) : IO Unit :=
+  match Parse.Flat.parse line with
+  | .ok (.span data) => IO.println (Sdk.Console.renderSpan data)
+  | .ok (.log record) => IO.println (Render.logRecord record)
+  | .error message => IO.eprintln message
+```
 
 ## File output
 
