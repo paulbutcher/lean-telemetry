@@ -34,7 +34,7 @@ def suite : TestM Unit := do
   checkEq "ExceptT over TelemetryT"
     (← runTelemetry (ExceptT.run (ε := String) observe)).toOption
     (some [none, some ctxA, some ctxB])
-  -- The case the plan warns about: an inner reader makes bare `read` ambiguous.
+  -- The stack at risk: an inner reader makes bare `read` ambiguous.
   checkEq "TelemetryT over ReaderT"
     (← ReaderT.run (ρ := Nat) (runTelemetry observe) 0) [none, some ctxA, some ctxB]
   checkEq "context is restored after the scope"

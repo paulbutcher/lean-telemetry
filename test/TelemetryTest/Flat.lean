@@ -46,6 +46,9 @@ private def logRow (data : LogRecord) : String := Sdk.Flat.logRecord resource da
 private def parsed (line : String) : Option Telemetry.Parse.Flat.Row :=
   (Telemetry.Parse.Flat.parse line).toOption
 
+private def halfContext (row : String) : String :=
+  row.replace s!"\"{Sdk.Flat.Field.spanId}\":\"{ctx.spanId}\"," ""
+
 /-!
 Two serialisers over one `SpanData` drift: a field is added to the writer and forgotten in the
 reader. Reading back what was written is the claim that catches exactly that, and the interesting
@@ -153,6 +156,8 @@ def suite : TestM Unit := do
 
   check "a record with no span context comes back with none"
     (logRoundTrips { record with ctx := none })
+  check "and one carrying half a context is refused rather than given an empty id"
+    (parsed (halfContext (logRow record))).isNone
   check "an unset status and an absent parent come back as they went" (roundTrips root)
 
   property "a span survives the round trip"

@@ -191,7 +191,8 @@ private def spanOf (fields : List (String × Json)) : Except String Sdk.SpanData
 private def contextOf (fields : List (String × Json)) : Except String (Option SpanContext) := do
   match ← optional fields Field.traceId, ← optional fields Field.spanId with
   | none, none => .ok none
-  | traceId, spanId => .ok (some { traceId := traceId.getD "", spanId := spanId.getD "" })
+  | some traceId, some spanId => .ok (some { traceId, spanId })
+  | _, _ => .error s!"'{Field.traceId}' and '{Field.spanId}' appear together or not at all"
 
 private def logOf (fields : List (String × Json)) : Except String LogRecord := do
   let codeText ← digitsOf fields Field.severityCode
