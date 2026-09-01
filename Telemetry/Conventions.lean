@@ -25,6 +25,7 @@ def urlPath : String := "url.path"
 def urlQuery : String := "url.query"
 def dbSystemName : String := "db.system.name"
 def dbOperationName : String := "db.operation.name"
+def dbCollectionName : String := "db.collection.name"
 def errorType : String := "error.type"
 
 end Telemetry.Conventions

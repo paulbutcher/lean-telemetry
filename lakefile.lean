@@ -7,7 +7,7 @@ open Lake DSL
 
 /-- Bumping `version` also means bumping `Otlp.libraryVersion`, which reports it on the wire. -/
 package telemetry where
-  version := v!"0.5.0"
+  version := v!"0.5.1"
   leanOptions := #[⟨`warningAsError, true⟩]
 
 require leancurl from git "https://github.com/paulbutcher/leancurl" @ "v0.3.1"

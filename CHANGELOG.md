@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.1] - 2026-09-01
+
+- `db.collection.name` in `Telemetry.Conventions`
+
 ## [0.5.0] - 2026-08-29
 
 - A flat row carrying only one of the two context ids is refused rather than read as an empty id
