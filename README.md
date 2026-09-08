@@ -193,6 +193,12 @@ The payload is OTLP/JSON, which the collector's OTLP receiver accepts on its HTT
 
 Each export is its own connection. An execution environment that freezes between invocations freezes both ends of a kept one, which would then be resumed against a peer that may long since have dropped it.
 
+### Reaching a hosted backend
+
+Hosted backends authenticate ingest with a request header, which this exporter cannot send. Run a collector alongside the process, as a sidecar in the same task or pod, and point the exporter at `localhost`; authentication, batching and retry are then configured in the collector's exporter. That is what the Lambda extension above already is, and what the file receiver serves too, differing only in how the data reaches the collector.
+
+Where nothing can run alongside the process there is no route to a hosted backend from here. The flat format on stdout, forwarded from wherever the logs land, is the alternative.
+
 ### When the collector is not there
 
 A failed export never reaches the application. A request does not fail, and a span's `report` does not throw, because telemetry could not be delivered; the data is dropped and the failure is reported on stderr instead.
@@ -208,7 +214,7 @@ A collector that answers but rejects the payload is treated the same way, with i
 
 ## Not implemented
 
-Metrics, sampling, W3C `traceparent` propagation between processes, batching, span attribute limits, and OTLP over gRPC or protobuf.
+Metrics, sampling, W3C `traceparent` propagation between processes, authenticated export to a hosted backend, batching, span attribute limits, and OTLP over gRPC or protobuf.
 
 ## Building
 
