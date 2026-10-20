@@ -22,7 +22,7 @@ open Json
 
 def libraryName : String := "lean-telemetry"
 
-def libraryVersion : String := "0.5.1"
+def libraryVersion : String := "0.5.2"
 
 @[expose] def kindNumber : SpanKind → Int
   | .internal => 1

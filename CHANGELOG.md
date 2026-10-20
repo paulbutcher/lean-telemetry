@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.2] - 2026-10-20
+
+- Bump dependencies
+
 ## [0.5.1] - 2026-09-01
 
 - `db.collection.name` in `Telemetry.Conventions`
