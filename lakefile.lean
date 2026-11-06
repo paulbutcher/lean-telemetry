@@ -10,7 +10,7 @@ package telemetry where
   version := v!"0.5.2"
   leanOptions := #[⟨`warningAsError, true⟩]
 
-require leancurl from git "https://github.com/paulbutcher/leancurl" @ "v0.3.2"
+require leancurl from git "https://github.com/paulbutcher/leancurl" @ "v0.3.3"
 
 @[default_target]
 lean_lib Telemetry
